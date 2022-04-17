@@ -23,8 +23,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Server:
-    VERSION: int = 1
-    VERSION_STRING: str = '0.0.1'
+    VERSION: int = 2
+    VERSION_STRING: str = '0.0.2'
     APP_NAME: str = 'KenkoGo - Server'
 
     _status: ServerStatus = ServerStatus.STOPPED

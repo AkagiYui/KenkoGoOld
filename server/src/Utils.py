@@ -222,12 +222,13 @@ default_gocq_config = {
 
 class YamlConfig(dict):
 
-    def __init__(self, path, auto_load=True, auto_save=True):
+    def __init__(self, path, auto_load=True, auto_save=True, auto_create=True):
         super().__init__()
         self.data = {}
         self.path = path
         self.yaml_controller = ruamel.yaml.YAML()
         self.auto_save = auto_save
+        self.auto_create = auto_create
         if auto_load:
             self.load()
 
@@ -235,9 +236,14 @@ class YamlConfig(dict):
         self.data = value
 
     def load(self):
-        with open(self.path, 'r', encoding='utf-8') as f:
-            # self.data = yaml.safe_load(f)
-            self.data = self.yaml_controller.load(f)
+        try:
+            with open(self.path, 'r', encoding='utf-8') as f:
+                self.data = self.yaml_controller.load(f)
+        except FileNotFoundError:
+            if self.auto_create:
+                self.save()
+            else:
+                raise
 
     def save(self):
         with open(self.path, 'w', encoding='utf-8') as f:

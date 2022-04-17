@@ -1,0 +1,9 @@
+account:
+  uin: 123456  # 登录QQ号
+gocq:
+  version: 'v1.0.0-rc1'  # 欲下载的go-cqhttp版本
+port:
+  http: 15700  # HTTP服务器端口
+  auto_change: FALSE  # 是否自动切换端口
+host: '0.0.0.0'  # HTTP服务器监听地址
+token: ''  # client发出http与ws请求时在Header中加入的token Headers['token'] = token

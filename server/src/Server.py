@@ -23,8 +23,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Server:
-    VERSION: int = 2
-    VERSION_STRING: str = '0.0.2'
+    VERSION: int = 3
+    VERSION_STRING: str = '0.0.3'
     APP_NAME: str = 'KenkoGo - Server'
 
     _status: ServerStatus = ServerStatus.STOPPED
@@ -106,7 +106,7 @@ class Server:
                 if 'http' not in server.keys():
                     continue
                 _server = server['http']
-                _server['post']['secret'] = gocq_secret
+                _server['post'][0]['secret'] = gocq_secret
             _config.save()
             self.gocq_config = _config
         else:

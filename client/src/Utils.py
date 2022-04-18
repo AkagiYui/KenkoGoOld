@@ -1,23 +1,6 @@
 import logging
-import inspect
-import ctypes
 import colorlog
 import ruamel.yaml
-
-
-def is_port_in_use(_port: int, _host='127.0.0.1'):
-    import socket
-    s = None
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1)
-        s.connect((_host, int(_port)))
-        return True
-    except socket.error:
-        return False
-    finally:
-        if s:
-            s.close()
 
 
 def get_logger(name, log_level: int = logging.DEBUG) -> logging.Logger:
@@ -44,25 +27,6 @@ def _get_console_handler(name: str = '') -> logging.StreamHandler:
         log_colors=log_colors_config
     ))
     return console_handler
-
-
-def _async_raise(tid, exctype):
-    """raises the exception, performs cleanup if needed"""
-    tid = ctypes.c_long(tid)
-    if not inspect.isclass(exctype):
-        exctype = type(exctype)
-    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
-    if res == 0:
-        raise ValueError("invalid thread id")
-    elif res != 1:
-        # """if it returns a number greater than one, you're in trouble,
-        # and you should call it again with exc=NULL to revert the effect"""
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
-        raise SystemError("PyThreadState_SetAsyncExc failed")
-
-
-def stop_thread(thread):
-    _async_raise(thread.ident, SystemExit)
 
 
 class YamlConfig(dict):

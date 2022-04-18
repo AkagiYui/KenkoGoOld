@@ -100,7 +100,7 @@ class DefaultRouter:
             if not self.shared_objects['accept_connection']:
                 response = JSONResponse(Result.error(405, 'server not running'))
             else:
-                if request.url.path in ['/gocq']:
+                if request.url.path in ['/gocq', '/qrcode']:
                     response = await call_next(request)
                 else:
                     headers: Headers = request.headers

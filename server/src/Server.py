@@ -23,8 +23,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Server:
-    VERSION: int = 4
-    VERSION_STRING: str = '0.0.4'
+    VERSION: int = 5
+    VERSION_STRING: str = '0.0.5'
     APP_NAME: str = 'KenkoGo - Server'
 
     _status: ServerStatus = ServerStatus.STOPPED
@@ -143,7 +143,8 @@ class Server:
                 release_content = requests.get(release_url, stream=True)
             except requests.exceptions.ConnectionError:
                 # Logger.error('下载失败，请检查网络连接')
-                raise SystemError('go-cqhttp 下载失败，请检查与 GitHub 的连接，或手动下载可执行文件到 gocq 目录并命名为 go-cqhttp')
+                raise SystemError(f'go-cqhttp 下载失败，请检查与 GitHub 的连接，'
+                                  f'或手动下载可执行文件到 {gocq_path_dir} 目录并命名为 {gocq_name_bin}')
             gocq_path_compressed = gocq_path_bin + ('.zip' if self.is_win else '.tar.gz')
             with open(gocq_path_compressed, 'wb') as __f:
                 for chunk in release_content.iter_content(chunk_size=1024):

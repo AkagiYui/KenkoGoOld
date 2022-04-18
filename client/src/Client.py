@@ -8,6 +8,7 @@ import time
 import Utils
 import sys
 from GocqApi import GocqApi
+from ServerStatus import ServerStatus
 
 Logger: logging.Logger = Utils.get_logger('Client')
 Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
@@ -15,8 +16,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Client:
-    VERSION: int = 1
-    VERSION_STRING: str = '0.0.1'
+    VERSION: int = 2
+    VERSION_STRING: str = '0.0.2'
     APP_NAME: str = 'KenkoGo - Client'
 
     _status = 0
@@ -48,6 +49,7 @@ class Client:
 
         # 读取配置文件
         self.config = Utils.YamlConfig('./config.yml')
+        shared_objects['client_config'] = self.config
 
         self.server_port = self.config['server']['port']
         self.server_host = self.config['server']['host']
@@ -119,23 +121,27 @@ class Client:
 
     # 事件: 已连接
     def event_open(self, _):
-        Logger.info('WebSocket连接成功')
-        self.events.on_open()
+        Logger.debug('WebSocket连接成功')
+        self.events.on_connect()
 
     # 事件: 收到消息
     def event_message(self, _, message):
         # Logger.debug(f'收到消息: {message}')
         message = message.decode("utf-8").strip()
         message = json.loads(message)
-        self.events.on_message(message)
+        if message['post_type'] == 'server_event':
+            if message['server_event_type'] == 'gocq_event':
+                status: ServerStatus = ServerStatus(message['data']['code'])
+                self.events.on_server_status_changed(status)
+        else:
+            self.events.on_message(message)
 
     # 事件: 出错
     def event_error(self, _, error):
         Logger.error(f'WebSocket出错: {error}')
-        self.events.on_error(error)
 
     # 事件: 关闭
     def event_close(self, _, code, reason):
-        Logger.debug(f'WebSocket关闭: {code} {reason}')
-        self.events.on_close(code, reason)
+        Logger.warning(f'WebSocket关闭: {code} {reason}')
+        self.events.on_disconnect()
         self.start()

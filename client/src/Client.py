@@ -16,8 +16,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Client:
-    VERSION: int = 2
-    VERSION_STRING: str = '0.0.2'
+    VERSION: int = 3
+    VERSION_STRING: str = '0.0.3'
     APP_NAME: str = 'KenkoGo - Client'
 
     _status = 0
@@ -101,11 +101,14 @@ class Client:
     # 开始
     def start(self):
         while True:
+            if self.shared_objects['time_to_exit'] is True:
+                return
             result = self.can_connect()
             if result[0]:
                 break
             else:
-                Logger.error(f'服务器连接失败: {result[1]}')
+                Logger.error('服务器连接失败.')
+                # Logger.debug(result[1])
                 time.sleep(1)
 
         self.thread_ws = threading.Thread(
@@ -117,7 +120,8 @@ class Client:
 
     def stop(self):
         self.ws_app.close()
-        self.thread_ws.join()
+        if isinstance(self.thread_ws, threading.Thread):
+            self.thread_ws.join()
 
     # 事件: 已连接
     def event_open(self, _):
@@ -130,9 +134,13 @@ class Client:
         message = message.decode("utf-8").strip()
         message = json.loads(message)
         if message['post_type'] == 'server_event':
-            if message['server_event_type'] == 'gocq_event':
+            if message['server_event_type'] == 'gocq_event':  # go-cqhttp 事件
                 status: ServerStatus = ServerStatus(message['data']['code'])
                 self.events.on_server_status_changed(status)
+            elif message['server_event_type'] == 'server_event':  # 服务器事件
+                data = message['data']
+                if data == 'server_stopping':
+                    Logger.warning('服务器正在停止')
         else:
             self.events.on_message(message)
 

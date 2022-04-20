@@ -31,8 +31,9 @@ class Events:
     def on_message(self, message: dict):
         Logger.debug(f'收到消息: {message}')
         try:
-            if message['group_id'] == 1234567890 and message['raw_message'] == 'ttest':
-                self.gocq_api.send_group_msg(1234567890, '哈哈')
-        except Exception as e:
+            if message['user_id'] == 2221110033:
+                if message['raw_message'] == 'testt':
+                    self.gocq_api.send_group_msg(message['group_id'], '哈哈')
+        except KeyError:
             pass
 

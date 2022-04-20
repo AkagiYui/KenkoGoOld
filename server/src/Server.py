@@ -23,8 +23,8 @@ Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
 # 本体
 class Server:
-    VERSION: int = 5
-    VERSION_STRING: str = '0.0.5'
+    VERSION: int = 6
+    VERSION_STRING: str = '0.0.6'
     APP_NAME: str = 'KenkoGo - Server'
 
     _status: ServerStatus = ServerStatus.STOPPED
@@ -41,18 +41,18 @@ class Server:
         Logger.info(f'go-cqhttp 状态改变为 {value.name}')
 
         # 推送状态改变事件
-        try:
-            loop = asyncio.get_running_loop()
-            loop = loop.create_task
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            loop = loop.run_until_complete
-        loop(self.http_server.websocket_manager.broadcast(
+        # try:
+        #     loop = asyncio.get_running_loop()
+        #     loop = loop.create_task
+        # except RuntimeError:
+        #     loop = asyncio.new_event_loop()
+        #     loop = loop.run_until_complete
+        # loop(self.http_server.websocket_manager.broadcast(
+        #     GocqMessage.server_event('gocq_event', value)
+        # ))
+        self.http_server.websocket_manager.broadcast_sync(
             GocqMessage.server_event('gocq_event', value)
-        ))
-
-        if value == ServerStatus.RUNNING:
-            Logger.info('已收到消息上报，确认 go-cqhttp 已启动')
+        )
 
     # 状态操作器
     def status_operator(self, status: ServerStatus = None) -> ServerStatus:
@@ -175,16 +175,6 @@ class Server:
         shared_objects['server_config'] = self.config
         shared_objects['gocq_config'] = self.gocq_config
 
-        self.gocq_process = GocqProcess({
-            'gocq_path_dir': gocq_path_dir,
-            'gocq_name_bin': gocq_name_bin,
-            'gocq_secret': gocq_secret,
-            'gocq_access_token': gocq_access_token,
-            'gocq_uin': self.config['account']['uin'],
-        }, shared_objects)
-
-        shared_objects['gocq_process'] = self.gocq_process
-
         self.http_server = HttpServer({
             'gocq_path_dir': gocq_path_dir,
             'gocq_access_token': gocq_access_token,
@@ -192,17 +182,27 @@ class Server:
             'token': self.config['token'],
             'auto_change_port': self.config['port']['auto_change'],
         }, shared_objects)
-
         shared_objects['http_server'] = self.http_server
+
+        self.gocq_process = GocqProcess({
+            'gocq_path_dir': gocq_path_dir,
+            'gocq_name_bin': gocq_name_bin,
+            'gocq_secret': gocq_secret,
+            'gocq_access_token': gocq_access_token,
+            'gocq_uin': self.config['account']['uin'],
+        }, shared_objects)
+        shared_objects['gocq_process'] = self.gocq_process
 
     def start(self):
         self.http_server.start()
 
     def stop(self):
         loop = asyncio.new_event_loop()
-        loop.run_until_complete(self.http_server.websocket_manager.broadcast(
-            GocqMessage.server_event('server_event', 'server is stopping')
-        ))
+        loop.run_until_complete(
+            self.http_server.websocket_manager.broadcast(
+                GocqMessage.server_event('server_event', 'server_stopping')
+            )
+        )
         Logger.debug('正在停止 KenkoGoServer')
         if self.status != ServerStatus.STOPPED:
             self.gocq_process.stop()

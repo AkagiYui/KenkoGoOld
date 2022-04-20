@@ -4,6 +4,7 @@ client/venv-*
 .idea
 server/src/gocq
 server/src/config.yml
+client/src/config.yml
 
 ### Python template
 # Byte-compiled / optimized / DLL files

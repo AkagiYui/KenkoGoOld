@@ -11,8 +11,7 @@ from Client import Client
 def signal_handler(sign, _):
     if sign == signal.SIGINT or sign == signal.SIGTERM:
         Logger.debug('收到退出信号，正在退出...')
-        global time_to_exit
-        time_to_exit = True
+        shared_objects['time_to_exit'] = True
 
 
 if __name__ == '__main__':
@@ -23,9 +22,9 @@ if __name__ == '__main__':
     Logger: logging.Logger = Utils.get_logger('  main')
     Logger.setLevel(logging.DEBUG if '--debug' in sys.argv else logging.INFO)
 
-    time_to_exit = False
     shared_objects = {
         'exit_code': 0,
+        'time_to_exit': False
     }
 
     # 设置信号响应
@@ -41,13 +40,13 @@ if __name__ == '__main__':
         Logger.error(e)
     client.start()
 
-    if time_to_exit:
-        Logger.error('出现异常，正在退出...')
+    # if shared_objects['time_to_exit']:
+    #     Logger.error('出现异常，正在退出...')
 
     while True:
-        if time_to_exit:
+        if shared_objects['time_to_exit']:
             break
-        time.sleep(0)
+        time.sleep(0.5)
 
     if isinstance(client, Client):
         client.stop()

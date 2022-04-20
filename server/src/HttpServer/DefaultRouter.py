@@ -1,3 +1,4 @@
+import threading
 from fastapi import APIRouter
 import hashlib
 import hmac
@@ -74,12 +75,18 @@ class DefaultRouter:
 
         # 接口: 启动go-cqhttp
         @self.http_app.post('/start')
-        async def api_start():
+        async def api_start(wait: bool = False):
             Logger.debug('尝试启动 go-cqhttp')
             if self.status_operator() != ServerStatus.STOPPED:
                 Logger.warning('Already started, 已经启动了')
                 return Result.success('Already started, 已经启动了', code=201)
-            shared_objects['gocq_process'].start()
+            if wait:
+                def start_thread():
+                    time.sleep(5)
+                    shared_objects['gocq_process'].start()
+                threading.Thread(target=start_thread).start()
+            else:
+                shared_objects['gocq_process'].start()
             return Result.success('启动成功')
 
         # 接口: 服务器状态
@@ -124,12 +131,18 @@ class DefaultRouter:
             Logger.info(f'服务器已在 http://{self.server_config["host"]}:{self.server_config["port"]["http"]} 启动')
             Logger.debug(f'调试地址: http://{Utils.get_self_ip()}:{self.server_config["port"]["http"]}')
             if '--auto-start' in sys.argv:
-                await api_start()
+                # time.sleep(1)
+                # threading.Thread(target=await api_start).start()
+                # await asyncio.sleep(5)
+                # asyncio.get_event_loop().create_task(asyncio.sleep(5))
+                # asyncio.get_event_loop().create_task(api_start())
+                await api_start(True)
 
         # 事件: HTTP服务器关闭
         @self.http_app.on_event('shutdown')
         async def event_shutdown():
-            Logger.info('服务器将被关闭')
+            # Logger.info('服务器将被关闭')
+            pass
 
         # 接口: WebSocket请求
         @self.http_app.websocket('/websocket')

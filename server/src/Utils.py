@@ -15,7 +15,7 @@ def is_port_in_use(_port: int, _host='127.0.0.1'):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
-        s.connect((_host, int(_port)))
+        s.connect((_host, _port))
         return True
     except socket.error:
         return False
@@ -123,7 +123,7 @@ class CustomJsonEncoder(json.JSONEncoder):
 class HttpResult:
     @classmethod
     def success(cls, data=None, msg='', code=200):
-        return {'code': 200, 'msg': msg, 'data': data}
+        return {'code': code, 'msg': msg, 'data': data}
 
     @classmethod
     def no_auth(cls, msg='身份未认证'):

@@ -9,7 +9,7 @@ from Client import Client
 
 # 信号响应处理器
 def signal_handler(sign, _):
-    if sign == signal.SIGINT or sign == signal.SIGTERM:
+    if sign in [signal.SIGINT, signal.SIGTERM]:
         Logger.debug('收到退出信号，正在退出...')
         shared_objects['time_to_exit'] = True
 
@@ -43,9 +43,7 @@ if __name__ == '__main__':
     # if shared_objects['time_to_exit']:
     #     Logger.error('出现异常，正在退出...')
 
-    while True:
-        if shared_objects['time_to_exit']:
-            break
+    while not shared_objects['time_to_exit']:
         time.sleep(0.5)
 
     if isinstance(client, Client):

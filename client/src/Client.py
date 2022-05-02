@@ -87,14 +87,13 @@ class Client:
     def can_connect(self):
         try:
             response = self.r.get(f'{self.server_base_url}/status')
-            if response.status_code == 200:
-                response = response.json()
-                if response['code'] == 200:
-                    return True, None
-                else:
-                    raise Exception(response['msg'])
+            if response.status_code != 200:
+                raise ConnectionError('服务器连接失败')
+            response = response.json()
+            if response['code'] == 200:
+                return True, None
             else:
-                raise Exception('服务器连接失败')
+                raise ConnectionError(response['msg'])
         except Exception as e:
             return False, e
 
@@ -106,10 +105,9 @@ class Client:
             result = self.can_connect()
             if result[0]:
                 break
-            else:
-                Logger.error('服务器连接失败.')
-                # Logger.debug(result[1])
-                time.sleep(1)
+            Logger.error('服务器连接失败.')
+            # Logger.debug(result[1])
+            time.sleep(1)
 
         self.thread_ws = threading.Thread(
             target=self.ws_app.run_forever,

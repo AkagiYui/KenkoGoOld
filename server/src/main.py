@@ -9,7 +9,7 @@ from Server import Server
 
 # 信号响应处理器
 def signal_handler(sign, _):
-    if sign == signal.SIGINT or sign == signal.SIGTERM:
+    if sign in [signal.SIGINT, signal.SIGTERM]:
         Logger.debug('收到退出信号，正在退出...')
         global time_to_exit
         time_to_exit = True
@@ -49,9 +49,7 @@ if __name__ == '__main__':
     if time_to_exit:
         Logger.error('Server 出现异常，正在退出...')
 
-    while True:
-        if time_to_exit:
-            break
+    while not time_to_exit:
         time.sleep(0)
 
     if isinstance(server, Server):

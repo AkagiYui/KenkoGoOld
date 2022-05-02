@@ -53,23 +53,16 @@ class DefaultRouter:
             header_token = request.headers['X-Signature']
             body_hash = hash_mac(config['gocq_secret'], body_bytes)
             if f'sha1={body_hash}' != header_token:
-                Logger.warning(f'go-cqhttp 事件签名错误，请检查是否被篡改')
+                Logger.warning('go-cqhttp 事件签名错误，请检查是否被篡改')
 
             body_json = await request.json()
             msg = body_json
             # print(msg)
-            if msg['post_type'] == 'meta_event':
-                if msg['meta_event_type'] == 'heartbeat':
-                    # Logger.debug('GOCQ发来的心跳')
-                    if self.status_operator() != ServerStatus.RUNNING:
-                        self.status_operator(ServerStatus.RUNNING)
-                    return
-            elif msg['post_type'] == 'notice':
-                # Logger.info('设备在线状态变动')
-                pass
-            else:
-                # print(body_json)
-                pass
+            if msg['post_type'] == 'meta_event' and msg['meta_event_type'] == 'heartbeat':
+                # Logger.debug('GOCQ发来的心跳')
+                if self.status_operator() != ServerStatus.RUNNING:
+                    self.status_operator(ServerStatus.RUNNING)
+                return
             await self.websocket_manager.broadcast(body_bytes)
             return Result.success()
 
@@ -106,18 +99,17 @@ class DefaultRouter:
 
             if not self.shared_objects['accept_connection']:
                 response = JSONResponse(Result.error(405, 'server not running'))
+            elif request.url.path in ['/gocq', '/qrcode']:
+                response = await call_next(request)
             else:
-                if request.url.path in ['/gocq', '/qrcode']:
-                    response = await call_next(request)
-                else:
-                    headers: Headers = request.headers
-                    try:
-                        if config['token'] != '' and headers['token'] != config['token']:
-                            raise KeyError('token错误')
-                        else:
-                            response = await call_next(request)
-                    except KeyError:
-                        response = JSONResponse(Result.no_auth())
+                headers: Headers = request.headers
+                try:
+                    if config['token'] == '' or headers['token'] == config['token']:
+                        response = await call_next(request)
+                    else:
+                        raise ValueError('token错误')
+                except ValueError:
+                    response = JSONResponse(Result.no_auth())
 
             process_time = time.time() - start_time  # 请求处理完毕
             response.headers['X-Process-Time'] = str(process_time)

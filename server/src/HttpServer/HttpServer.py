@@ -28,7 +28,7 @@ class HttpServer:
         # 检查HTTP服务器端口占用
         if Utils.is_port_in_use(self.port):
             if not self.server_config['port']['auto_change']:
-                raise Exception(f'端口 {self.port} 被占用！')
+                raise SystemError(f'端口 {self.port} 被占用！')
             _port_http = Utils.get_free_port()
             Logger.warning(f'端口 {self.port} 被占用，已尝试修改为{_port_http}！')
             self.server_config['port']['http'] = _port_http

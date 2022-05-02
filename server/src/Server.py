@@ -88,8 +88,7 @@ class Server:
         gocq_secret = 'eh182yg909du1uas'
         gocq_access_token = 'jdo1902d18092yhf'
         gocq_path_config = os.path.join(gocq_path_dir, 'config.yml')
-        gocq_name_bin = 'go-cqhttp'
-        gocq_name_bin += ('.exe' if self.is_win else '')
+        gocq_name_bin = 'go-cqhttp' + (('.exe' if self.is_win else ''))
         gocq_path_bin = os.path.join(gocq_path_dir, gocq_name_bin)
 
         # 检查go-cqhttp的文件情况
@@ -141,10 +140,10 @@ class Server:
 
             try:
                 release_content = requests.get(release_url, stream=True)
-            except requests.exceptions.ConnectionError:
+            except requests.exceptions.ConnectionError as e:
                 # Logger.error('下载失败，请检查网络连接')
-                raise SystemError(f'go-cqhttp 下载失败，请检查与 GitHub 的连接，'
-                                  f'或手动下载可执行文件到 {gocq_path_dir} 目录并命名为 {gocq_name_bin}')
+                raise SystemError(f'go-cqhttp 下载失败，请检查与 GitHub 的连接，或手动下载可执行文件到 {gocq_path_dir} 目录并命名为 {gocq_name_bin}') from e
+
             gocq_path_compressed = gocq_path_bin + ('.zip' if self.is_win else '.tar.gz')
             with open(gocq_path_compressed, 'wb') as __f:
                 for chunk in release_content.iter_content(chunk_size=1024):
@@ -153,22 +152,20 @@ class Server:
 
             if self.is_win:
                 if not zipfile.is_zipfile(gocq_path_compressed):
-                    raise ValueError('Downloaded file is not a zip file, 下载的文件不是zip文件')
+                    raise TypeError('Downloaded file is not a zip file, 下载的文件不是zip文件')
                 with zipfile.ZipFile(gocq_path_compressed, 'r') as f:
-                    if 'go-cqhttp.exe' in f.namelist():
-                        f.extract('go-cqhttp.exe', gocq_path_dir)
-                        os.rename(os.path.join(gocq_path_dir, 'go-cqhttp.exe'), gocq_path_bin)
-                    else:
+                    if 'go-cqhttp.exe' not in f.namelist():
                         raise ValueError('File not found in compressed file, 压缩文件中未找到可执行文件')
+                    f.extract('go-cqhttp.exe', gocq_path_dir)
+                    os.rename(os.path.join(gocq_path_dir, 'go-cqhttp.exe'), gocq_path_bin)
             else:
                 if not tarfile.is_tarfile(gocq_path_compressed):
-                    raise Exception('Downloaded file is not a tar file, 下载的文件不是tar文件')
+                    raise TypeError('Downloaded file is not a tar file, 下载的文件不是tar文件')
                 with tarfile.open(gocq_path_compressed, 'r:gz') as f:
-                    if 'go-cqhttp' in f.getnames():
-                        f.extract('go-cqhttp', gocq_path_dir)
-                        os.rename(os.path.join(gocq_path_dir, 'go-cqhttp'), gocq_path_bin)
-                    else:
+                    if 'go-cqhttp' not in f.getnames():
                         raise ValueError('File not found in compressed file, 压缩文件中未找到可执行文件')
+                    f.extract('go-cqhttp', gocq_path_dir)
+                    os.rename(os.path.join(gocq_path_dir, 'go-cqhttp'), gocq_path_bin)
             os.remove(gocq_path_compressed)
 
         shared_objects['status_operator'] = self.status_operator

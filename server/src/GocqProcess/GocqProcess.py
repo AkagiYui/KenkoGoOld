@@ -84,9 +84,7 @@ class GocqProcess:
             if not text_output:
                 continue
 
-            if text_output.startswith('上报 Event 数据'):
-                pass
-            else:
+            if not text_output.startswith('上报 Event 数据'):
                 Logger2.debug(text_output)
 
             if text_output.startswith('开始尝试登录并同步消息'):
@@ -117,12 +115,16 @@ class GocqProcess:
                     text_output = text_output.removeprefix('unexpected disconnect: ')
                     Logger.warning(f'预期外的断线: {text_output}')
                 elif text_output.startswith('register client failed: Packet timed out'):
-                    Logger.warning(f'注册客户端失败: 数据包超时')
+                    Logger.warning('注册客户端失败: 数据包超时')
                 elif text_output.startswith('connect server error: dial tcp error: '):
                     Logger.warning('服务器连接失败')
                     self.status_operator(ServerStatus.OFFLINE)
                 elif text_output.startswith('connect to server'):
                     self.status_operator(ServerStatus.CONNECTING_TO_TENCENT)
+                elif text_output.startswith('resolve long message server error'):
+                    Logger.warning('长消息服务器延迟测试失败')
+                elif text_output.startswith('test long message server response latency error'):
+                    Logger.warning('长消息服务器响应延迟测试失败,')
             elif text_output.startswith('Bot已离线: '):
                 text_output = text_output.removeprefix('Bot已离线: ')
                 Logger.warning(f'Bot已离线: {text_output}')

@@ -1,3 +1,7 @@
+# ! 停止维护 !
+
+该项目已停止维护，请查看新项目 [**KenkoGoServer**](https://github.com/AkagiYui/KenkoGoServer)
+
 ## 功能介绍
 
 这是一个 `go-cqhttp守护程序` 
